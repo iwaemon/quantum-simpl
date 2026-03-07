@@ -60,13 +60,15 @@ mVMC input files are generated in the `output/` directory.
 
 | File | Description |
 |------|-------------|
-| `Trans.def` | One-body transfer integrals |
-| `InterAll.def` | Two-body interaction terms |
+| `namelist.def` | Master index of input files |
 | `modpara.def` | Simulation parameters |
 | `locspn.def` | Local spin configuration |
+| `trans.def` | One-body transfer integrals |
+| `interall.def` | Two-body interaction terms |
 | `gutzwilleridx.def` | Gutzwiller variational parameters |
 | `jastrowidx.def` | Jastrow variational parameters |
 | `orbitalidx.def` | Orbital variational parameters |
+| `qptransidx.def` | Quantum number projection parameters |
 
 ## Documentation
 

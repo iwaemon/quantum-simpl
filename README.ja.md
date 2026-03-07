@@ -60,13 +60,15 @@ quantum-simpl hubbard.def -o output/
 
 | ファイル | 説明 |
 |----------|------|
-| `Trans.def` | 一体遷移積分 |
-| `InterAll.def` | 二体相互作用項 |
+| `namelist.def` | 入力ファイルのマスターインデックス |
 | `modpara.def` | シミュレーションパラメータ |
 | `locspn.def` | 局所スピン設定 |
+| `trans.def` | 一体遷移積分 |
+| `interall.def` | 二体相互作用項 |
 | `gutzwilleridx.def` | Gutzwiller変分パラメータ |
 | `jastrowidx.def` | Jastrow変分パラメータ |
 | `orbitalidx.def` | 軌道変分パラメータ |
+| `qptransidx.def` | 量子数射影パラメータ |
 
 ## ドキュメント
 

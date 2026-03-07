@@ -15,3 +15,19 @@ rayon = "1"
 
 [dev-dependencies]
 tempfile = "3"
+
+[[test]]
+name = "test_pipeline"
+path = "tests/integration/test_pipeline.rs"
+
+[[test]]
+name = "test_hubbard"
+path = "tests/integration/test_hubbard.rs"
+
+[[test]]
+name = "test_heisenberg"
+path = "tests/integration/test_heisenberg.rs"
+
+[[test]]
+name = "test_mvmc_output"
+path = "tests/integration/test_mvmc_output.rs"

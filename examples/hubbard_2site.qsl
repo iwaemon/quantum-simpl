@@ -1,0 +1,10 @@
+lattice 1d sites=2 pbc=false
+
+sum i=0..1:
+  -t * c†(i,up) c(i+1,up) + h.c.
+  -t * c†(i,down) c(i+1,down) + h.c.
+  U * n(i,up) n(i,down)
+
+params:
+  t = 1.0
+  U = 4.0

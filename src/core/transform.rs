@@ -1,4 +1,5 @@
 use crate::core::op::{Op, Spin, Term};
+use smallvec::SmallVec;
 
 #[derive(Debug, Clone)]
 pub enum SubstitutionRule {
@@ -35,4 +36,58 @@ fn apply_rule(op: Op, rule: &SubstitutionRule) -> Op {
             _ => op,
         },
     }
+}
+
+/// Convert all spin operators in terms to fermionic form.
+/// - Sp(i) → c†(i,↑) c(i,↓)
+/// - Sm(i) → c†(i,↓) c(i,↑)
+/// - Sz(i) → 0.5*c†(i,↑)c(i,↑) - 0.5*c†(i,↓)c(i,↓)
+///
+/// Sz causes Term splitting: one Term with Sz becomes two Terms.
+/// For products like Sz(i)*Sz(j), this produces 2×2=4 Terms.
+pub fn spin_to_fermion(terms: &[Term]) -> Vec<Term> {
+    let mut result = Vec::new();
+    for term in terms {
+        let mut partials: Vec<(f64, SmallVec<[Op; 4]>)> = vec![(term.coeff, SmallVec::new())];
+        for op in &term.ops {
+            match op {
+                Op::SpinPlus(site) => {
+                    for (_, ops) in &mut partials {
+                        ops.push(Op::FermionCreate(*site, Spin::Up));
+                        ops.push(Op::FermionAnnihilate(*site, Spin::Down));
+                    }
+                }
+                Op::SpinMinus(site) => {
+                    for (_, ops) in &mut partials {
+                        ops.push(Op::FermionCreate(*site, Spin::Down));
+                        ops.push(Op::FermionAnnihilate(*site, Spin::Up));
+                    }
+                }
+                Op::SpinZ(site) => {
+                    let mut new_partials = Vec::with_capacity(partials.len() * 2);
+                    for (coeff, ops) in &partials {
+                        let mut ops_up = ops.clone();
+                        ops_up.push(Op::FermionCreate(*site, Spin::Up));
+                        ops_up.push(Op::FermionAnnihilate(*site, Spin::Up));
+                        new_partials.push((*coeff * 0.5, ops_up));
+
+                        let mut ops_down = ops.clone();
+                        ops_down.push(Op::FermionCreate(*site, Spin::Down));
+                        ops_down.push(Op::FermionAnnihilate(*site, Spin::Down));
+                        new_partials.push((*coeff * -0.5, ops_down));
+                    }
+                    partials = new_partials;
+                }
+                other => {
+                    for (_, ops) in &mut partials {
+                        ops.push(*other);
+                    }
+                }
+            }
+        }
+        for (coeff, ops) in partials {
+            result.push(Term::new(coeff, ops));
+        }
+    }
+    result
 }

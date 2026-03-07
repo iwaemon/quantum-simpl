@@ -19,22 +19,37 @@ cargo test --test test_hubbard       # Run integration test by name
 
 ## Architecture
 
-The processing pipeline is linear and reflected directly in `main.rs`:
+### Two pipelines
 
+The CLI (`src/main.rs`) has two distinct pipelines selected by flags:
+
+**Standard pipeline** (default, processes `<INPUT>`):
 ```
-Input DSL → Parser → Expand → Normal Order → Combine → Sz Filter → mVMC Output
+Parse → Expand → Spin→Fermion → [YS Transform] → Normal Order → Combine → Sz Filter → [Classify] → mVMC Output
 ```
+
+**Correlation pipeline** (`--correlation <FILE>`):
+```
+Parse → Expand → Spin→Fermion → Normal Order → Combine → Green Reorder → cisajs/cisajscktaltdc Output
+```
+
+The YS transform path also triggers term classification (one-body / coulomb-intra / two-body) and writes a `coulombintra.def` when applicable.
 
 ### Module layout
 
 - **`src/parser/`** — Hand-written line-based DSL parser. `ast.rs` defines the parse tree types (`ModelDef`, `SumBlock`, `Expression`, `OpExpr`, etc.). `mod.rs` contains the parser logic.
-- **`src/core/`** — The four-stage transformation pipeline:
+- **`src/core/`** — Transformation pipeline stages:
   - `op.rs` — Core data types: `Op` (enum of fermion/spin operators), `Term` (coeff + SmallVec of ops), `Hamiltonian`
   - `expand.rs` — Unrolls sum loops, expands h.c., desugars `n(i,s)` → `c†c`, substitutes params
   - `normal.rs` — Applies fermion anticommutation to achieve normal ordering (c† before c)
   - `combine.rs` — Hash-based deduplication of identical operator strings, sums coefficients
   - `symmetry.rs` — Filters terms that violate Sz conservation
-- **`src/output/mvmc.rs`** — Writes mVMC-format `.def` files (namelist, modpara, trans, interall, etc.)
+  - `transform.rs` — Substitution rules: particle-hole (YS) transform, spin-to-fermion conversion (`Sp/Sm/Sz` → `c†c`)
+  - `classify.rs` — Splits terms into constants, one-body, coulomb-intra, and two-body categories (used by YS path)
+  - `green.rs` — Reorders 4-operator terms into Green's function form (`c†cc†c`) with anticommutation corrections
+- **`src/output/`**:
+  - `mvmc.rs` — Writes mVMC-format `.def` files (namelist, modpara, trans, interall, cisajs, cisajscktaltdc, etc.)
+  - `correlation.rs` — Human-readable `correlation_summary.txt` formatter
 
 ### Key design choices
 
@@ -44,8 +59,8 @@ Input DSL → Parser → Expand → Normal Order → Combine → Sz Filter → m
 
 ### Tests
 
-- `tests/unit_*.rs` — Unit tests for individual pipeline stages (parser, expand, normal, combine, symmetry, op, mvmc)
-- `tests/integration/` — End-to-end tests with known models (Hubbard, Heisenberg, pipeline, mVMC output verification)
+- `tests/unit_*.rs` — Unit tests for individual pipeline stages (parser, expand, normal, combine, symmetry, op, mvmc, transform, classify, green, correlation)
+- `tests/integration/` — End-to-end tests: `test_pipeline`, `test_hubbard`, `test_heisenberg`, `test_mvmc_output`, `test_ys_transform`, `test_ys_validation`, `test_correlation`
 
 ## DSL Syntax
 
@@ -61,3 +76,12 @@ params:
 ```
 
 Operators: `c†(i,s)`, `c(i,s)`, `n(i,s)` (sugar for c†c), `Sp(i)`, `Sm(i)`, `Sz(i)`. Spin values: `up`, `down`. Index expressions support `var`, `var+offset`, `var-offset`, or literal integers.
+
+## CLI Usage
+
+```bash
+quantum-simpl input.def -o output/           # Standard pipeline
+quantum-simpl input.def -o output/ --ys-transform  # With Yokoyama-Shiba transform
+quantum-simpl --correlation corr.def -o output/    # Correlation pipeline only
+quantum-simpl input.def --correlation corr.def -o output/  # Both pipelines
+```

@@ -133,12 +133,15 @@ fn main() {
     let ham = core::expand::expand(&model);
     eprintln!("Expanded: {} terms", ham.terms.len());
 
+    // Convert spin operators (Sp/Sm/Sz) to fermion operators (c†/c)
+    let terms = core::transform::spin_to_fermion(&ham.terms);
+
     let terms = if cli.ys_transform {
         eprintln!("Applying YS transformation (particle-hole for down-spin)...");
         let rules = vec![core::transform::SubstitutionRule::ParticleHole(core::op::Spin::Down)];
-        core::transform::apply_substitution(&ham.terms, &rules)
+        core::transform::apply_substitution(&terms, &rules)
     } else {
-        ham.terms
+        terms
     };
 
     let terms = core::normal::normal_order(&terms);
@@ -170,13 +173,14 @@ fn main() {
             std::process::exit(1);
         });
 
-        let namelist = if classified.coulomb_intra.is_empty() {
-            output::mvmc::generate_namelist()
-        } else {
-            let mut nl = output::mvmc::generate_namelist();
-            nl.push_str("CoulombIntra  coulombintra.def\n");
-            nl
-        };
+        let mut namelist = output::mvmc::generate_namelist();
+        if !classified.coulomb_intra.is_empty() {
+            namelist.push_str("CoulombIntra  coulombintra.def\n");
+        }
+        if cli.correlation.is_some() {
+            namelist.push_str("OneBodyG  cisajs.def\n");
+            namelist.push_str("TwoBodyG  cisajscktaltdc.def\n");
+        }
 
         let write = |name: &str, content: String| {
             std::fs::write(cli.output.join(name), content).unwrap_or_else(|e| {
@@ -212,6 +216,17 @@ fn main() {
                 eprintln!("Error writing output: {}", e);
                 std::process::exit(1);
             });
+
+        if cli.correlation.is_some() {
+            let namelist_path = cli.output.join("namelist.def");
+            let mut namelist = std::fs::read_to_string(&namelist_path).unwrap_or_default();
+            namelist.push_str("OneBodyG  cisajs.def\n");
+            namelist.push_str("TwoBodyG  cisajscktaltdc.def\n");
+            std::fs::write(&namelist_path, namelist).unwrap_or_else(|e| {
+                eprintln!("Error updating namelist.def: {}", e);
+                std::process::exit(1);
+            });
+        }
     }
 
     eprintln!("Written mVMC files to {}", cli.output.display());

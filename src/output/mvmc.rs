@@ -247,3 +247,49 @@ pub fn write_all_files(ham: &Hamiltonian, output_dir: &Path) -> std::io::Result<
 
     Ok(())
 }
+
+pub fn generate_cisajs_def(terms: &[Term]) -> String {
+    let mut out = String::new();
+    out.push_str("======================== \n");
+    out.push_str(&format!("NCisAjs        {}  \n", terms.len()));
+    out.push_str("======================== \n");
+    out.push_str("========i_j_s_tijs====== \n");
+    out.push_str("======================== \n");
+
+    for term in terms {
+        if term.ops.len() == 2 {
+            if let (Op::FermionCreate(i, si), Op::FermionAnnihilate(j, sj)) = (term.ops[0], term.ops[1]) {
+                out.push_str(&format!("    {}     {}     {}     {}\n",
+                    i, spin_to_idx(si), j, spin_to_idx(sj)));
+            }
+        }
+    }
+
+    out
+}
+
+pub fn generate_cisajscktaltdc_def(terms: &[Term]) -> String {
+    let mut out = String::new();
+    out.push_str("======================== \n");
+    out.push_str(&format!("NCisAjsCktAltDC  {}  \n", terms.len()));
+    out.push_str("======================== \n");
+    out.push_str("========i_j_s_k_l_t===== \n");
+    out.push_str("======================== \n");
+
+    for term in terms {
+        if term.ops.len() == 4 {
+            if let (
+                Op::FermionCreate(i, si),
+                Op::FermionAnnihilate(j, sj),
+                Op::FermionCreate(k, sk),
+                Op::FermionAnnihilate(l, sl),
+            ) = (term.ops[0], term.ops[1], term.ops[2], term.ops[3]) {
+                out.push_str(&format!("    {}     {}     {}     {}     {}     {}     {}     {}\n",
+                    i, spin_to_idx(si), j, spin_to_idx(sj),
+                    k, spin_to_idx(sk), l, spin_to_idx(sl)));
+            }
+        }
+    }
+
+    out
+}

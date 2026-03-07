@@ -100,13 +100,14 @@ params:
 ";
     let classified = run_ys_pipeline(input);
 
-    // After fix: detect_coulomb_intra now recognizes the normal-ordered form
-    // c†↑ c†↓ c↑ c↓ as CoulombIntra (same site, both spins)
+    // After fix: detect_coulomb_intra recognizes normal-ordered form and
+    // converts back to physical n↑n↓ coefficient (negating the normal-order sign).
+    // YS: U*n↑n↓ → -U*n↑n↓, so CoulombIntra = -4.0
     assert_eq!(classified.coulomb_intra.len(), 2, "Should have CoulombIntra on 2 sites");
     for &(site, coeff) in &classified.coulomb_intra {
         assert!(site <= 1, "Site should be 0 or 1, got {}", site);
-        assert!((coeff - 4.0).abs() < 1e-12,
-            "CoulombIntra coeff should be +4.0, got {}", coeff);
+        assert!((coeff - (-4.0)).abs() < 1e-12,
+            "CoulombIntra coeff should be -4.0 (YS flipped), got {}", coeff);
     }
     assert_eq!(classified.two_body.len(), 0, "No terms should remain in two_body");
 }

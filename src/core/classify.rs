@@ -51,9 +51,10 @@ fn detect_coulomb_intra(term: &Term) -> Option<(usize, f64)> {
          Op::FermionCreate(s2, Spin::Up), Op::FermionAnnihilate(s3, Spin::Up))
             if s0 == s1 && s1 == s2 && s2 == s3 => Some((s0, term.coeff)),
         // Normal-ordered: c†↑ c†↓ c↑ c↓ (or c†↑ c†↓ c↓ c↑)
+        // n↑n↓ = c†↑c↑c†↓c↓ = -c†↑c†↓c↑c↓, so physical coeff = -term.coeff
         (Op::FermionCreate(s0, sp0), Op::FermionCreate(s1, sp1),
          Op::FermionAnnihilate(s2, _), Op::FermionAnnihilate(s3, _))
-            if s0 == s1 && s1 == s2 && s2 == s3 && sp0 != sp1 => Some((s0, term.coeff)),
+            if s0 == s1 && s1 == s2 && s2 == s3 && sp0 != sp1 => Some((s0, -term.coeff)),
         _ => None,
     }
 }

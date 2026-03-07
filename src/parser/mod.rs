@@ -110,7 +110,7 @@ fn parse_sum_block(lines: &[&str], start: usize) -> Result<(SumBlock, usize), Pa
             break;
         }
 
-        expressions.push(parse_expression(trimmed)?);
+        expressions.extend(parse_expression(trimmed)?);
         i += 1;
     }
 
@@ -143,7 +143,7 @@ fn parse_params(lines: &[&str], start: usize) -> Result<(Vec<(String, f64)>, usi
     Ok((params, i))
 }
 
-fn parse_expression(line: &str) -> Result<Expression, ParseError> {
+fn parse_expression(line: &str) -> Result<Vec<Expression>, ParseError> {
     // Strip h.c. suffix
     let (line, hc) = if line.ends_with("+ h.c.") {
         (line[..line.len() - 6].trim(), true)
@@ -151,8 +151,107 @@ fn parse_expression(line: &str) -> Result<Expression, ParseError> {
         (line, false)
     };
 
+    // Try S(i) . S(j) pattern first
+    if let Some(exprs) = try_parse_spindot(line, hc)? {
+        return Ok(exprs);
+    }
+
     let tokens = tokenize(line)?;
-    build_expression(&tokens, hc)
+    Ok(vec![build_expression(&tokens, hc)?])
+}
+
+/// Parse index expression from an `S(...)` token, extracting what's inside the parens.
+fn parse_s_index(token: &str) -> Result<IndexExpr, ParseError> {
+    let paren_start = token.find('(')
+        .ok_or_else(|| ParseError(format!("Expected '(' in S operator: {}", token)))?;
+    let paren_end = token.find(')')
+        .ok_or_else(|| ParseError(format!("Expected ')' in S operator: {}", token)))?;
+    let name = &token[..paren_start];
+    if name != "S" {
+        return Err(ParseError(format!("Expected 'S' operator, got '{}'", name)));
+    }
+    let index_str = &token[paren_start + 1..paren_end];
+    parse_index(index_str)
+}
+
+/// Try to detect and expand the `S(i) . S(j)` pattern.
+/// Returns None if the line doesn't match the pattern.
+fn try_parse_spindot(line: &str, hc: bool) -> Result<Option<Vec<Expression>>, ParseError> {
+    // Look for ` . ` as separator between two S(...) tokens
+    let dot_pos = match line.find(" . ") {
+        Some(pos) => pos,
+        None => return Ok(None),
+    };
+
+    let before_dot = line[..dot_pos].trim();
+    let after_dot = line[dot_pos + 3..].trim();
+
+    // The part after dot should be S(...)
+    if !after_dot.starts_with("S(") {
+        return Ok(None);
+    }
+
+    // Parse coefficient and first S(...) from before_dot
+    // Could be "S(i)" or "coeff * S(i)"
+    let tokens_before = tokenize(before_dot)?;
+
+    // Find where S(...) is in the tokens
+    let s_token_idx = tokens_before.iter().position(|t| t.starts_with("S("));
+    let s_token_idx = match s_token_idx {
+        Some(idx) => idx,
+        None => return Ok(None),
+    };
+
+    // Everything before the S(...) token (excluding '*') is coefficient
+    let coeff_parts: Vec<String> = tokens_before[..s_token_idx]
+        .iter()
+        .filter(|t| *t != "*")
+        .cloned()
+        .collect();
+
+    let base_coeff = parse_coeff_from_strings(&coeff_parts)?;
+    let idx_i = parse_s_index(&tokens_before[s_token_idx])?;
+    let idx_j = parse_s_index(after_dot)?;
+
+    // Build the three expressions: 0.5*Sp(i)Sm(j), 0.5*Sm(i)Sp(j), 1.0*Sz(i)Sz(j)
+    let make_coeff = |factor: f64| -> CoeffExpr {
+        match &base_coeff {
+            CoeffExpr::Literal(1.0) => CoeffExpr::Literal(factor),
+            _ => CoeffExpr::Mul(
+                Box::new(base_coeff.clone()),
+                Box::new(CoeffExpr::Literal(factor)),
+            ),
+        }
+    };
+
+    let expressions = vec![
+        Expression {
+            coeff: make_coeff(0.5),
+            operators: vec![
+                OpExpr::SpinPlus(idx_i.clone()),
+                OpExpr::SpinMinus(idx_j.clone()),
+            ],
+            hermitian_conjugate: hc,
+        },
+        Expression {
+            coeff: make_coeff(0.5),
+            operators: vec![
+                OpExpr::SpinMinus(idx_i.clone()),
+                OpExpr::SpinPlus(idx_j.clone()),
+            ],
+            hermitian_conjugate: hc,
+        },
+        Expression {
+            coeff: make_coeff(1.0),
+            operators: vec![
+                OpExpr::SpinZ(idx_i),
+                OpExpr::SpinZ(idx_j),
+            ],
+            hermitian_conjugate: hc,
+        },
+    ];
+
+    Ok(Some(expressions))
 }
 
 fn tokenize(line: &str) -> Result<Vec<String>, ParseError> {

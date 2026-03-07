@@ -63,7 +63,7 @@ fn hubbard_4site_pbc() {
     let input = r#"
 lattice 1d sites=4 pbc=true
 
-sum i=0..4:
+sum i=0..3:
   -t * c†(i,up) c(i+1,up) + h.c.
   -t * c†(i,down) c(i+1,down) + h.c.
   U * n(i,up) n(i,down)

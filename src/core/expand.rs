@@ -13,7 +13,7 @@ pub fn expand(model: &ModelDef) -> Hamiltonian {
         .collect();
 
     for block in &model.sum_blocks {
-        for idx in block.range_start..block.range_end {
+        for idx in block.range_start..=block.range_end {
             for expr in &block.expressions {
                 let coeff = eval_coeff(&expr.coeff, &params);
                 let ops = expand_operators(&expr.operators, &block.var, idx, num_sites, pbc);

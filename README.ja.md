@@ -38,7 +38,7 @@ cargo build --release
 ```
 lattice 1d sites=10 pbc=true
 
-sum i=0..10:
+sum i=0..9:
   -t * c†(i,up) c(i+1,up) + h.c.
   -t * c†(i,down) c(i+1,down) + h.c.
   U * n(i,up) n(i,down)
@@ -63,7 +63,7 @@ quantum-simpl はスピン演算子にも対応しています。`heisenberg.qsl
 ```
 lattice 1d sites=10 pbc=true
 
-sum i=0..10:
+sum i=0..9:
   J * Sp(i) * Sm(i+1)
   J * Sm(i) * Sp(i+1)
   J * Sz(i) * Sz(i+1)
@@ -78,7 +78,24 @@ quantum-simpl heisenberg.qsl -o output/
 
 ### 開放境界条件に関する注意
 
-`pbc=false` を使用する場合、格子範囲外のサイトを参照する項は自動的に除去されます。sumの範囲が格子サイズと整合するよう注意してください。例えば `sites=10 pbc=false` の場合、最近接ホッピングには `sum i=0..9` を使用してください。
+`pbc=false` を使用する場合、格子範囲外のサイトを参照する項は警告付きで除去されます。sumの範囲が格子サイズと整合するよう注意してください。例えば `sites=10 pbc=false` の場合、最近接ホッピングには `sum i=0..8` を使用してください（範囲は両端を含むため、`i=9` は `c†(9,s) c(10,s)` を生成し、範囲外となります）。
+
+### Yokoyama–Shiba 変換
+
+**Yokoyama–Shiba（YS）変換**は、**ダウンスピンだけ**に粒子–空孔変換をかけるものです：↓の生成・消滅を入れ替え（\(c^\dagger_{i\downarrow} \leftrightarrow c_{i\downarrow}\)）、アップスピンはそのままにします。Hubbard型モデルでmVMCの特定の定式化に合わせるときなどに使います。
+
+**変換則（ダウンスピンのみ）:**
+
+- \(c^\dagger(i,\downarrow) \to c(i,\downarrow)\)
+- \(c(i,\downarrow) \to c^\dagger(i,\downarrow)\)
+
+**使い方:**
+
+```bash
+quantum-simpl hubbard.def -o output/ --ys-transform
+```
+
+`--ys-transform` を付けると、項を一体・二体・オンサイトCoulomb（coulomb-intra）に分類し、オンサイトCoulombがある場合は `coulombintra.def` を出力して `namelist.def` から参照します。定数項（オフセット）は標準エラーに表示されます。
 
 ## 対応する演算子
 
@@ -91,7 +108,7 @@ quantum-simpl heisenberg.qsl -o output/
 | スピン- | `Sm(i)` | スピン下降演算子 |
 | スピンz | `Sz(i)` | スピンz成分演算子 |
 
-スピン値: `up`、`down`。インデックス式: `i`、`i+1`、`i-1`、またはリテラル整数。
+スピン値: `up`、`down`。インデックス式: `i`、`i+1`、`i-1`、またはリテラル整数。範囲 `start..end` は**両端を含みます** — N サイトの PBC では `sum i=0..N-1` を使用してください。
 
 ## 出力ファイル
 
@@ -102,6 +119,7 @@ quantum-simpl heisenberg.qsl -o output/
 | `locspn.def` | 局所スピン設定 |
 | `trans.def` | 一体遷移積分 |
 | `interall.def` | 二体相互作用項 |
+| `coulombintra.def` | オンサイトCoulomb項（`--ys-transform` 時、該当項がある場合に出力） |
 | `gutzwilleridx.def` | Gutzwiller変分パラメータ |
 | `jastrowidx.def` | Jastrow変分パラメータ |
 | `orbitalidx.def` | 軌道変分パラメータ |

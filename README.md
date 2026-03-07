@@ -38,7 +38,7 @@ Create an input file `hubbard.def`:
 ```
 lattice 1d sites=10 pbc=true
 
-sum i=0..10:
+sum i=0..9:
   -t * c†(i,up) c(i+1,up) + h.c.
   -t * c†(i,down) c(i+1,down) + h.c.
   U * n(i,up) n(i,down)
@@ -56,6 +56,13 @@ quantum-simpl hubbard.def -o output/
 
 mVMC input files are generated in the `output/` directory. Input files can use any extension (`.qsl`, `.def`, etc.).
 
+**CLI options:**
+
+- `quantum-simpl <INPUT> -o <DIR>` — Standard pipeline (Hamiltonian → mVMC files).
+- `quantum-simpl --correlation <FILE> -o <DIR>` — Correlation pipeline only (generates measurement files).
+- `quantum-simpl <INPUT> --correlation <FILE> -o <DIR>` — Run both pipelines.
+- `--ys-transform` — Apply Yokoyama–Shiba (particle-hole for down-spin) in the standard pipeline (see below).
+
 ### Heisenberg Model Example
 
 quantum-simpl also supports spin operators. Create `heisenberg.qsl`:
@@ -63,7 +70,7 @@ quantum-simpl also supports spin operators. Create `heisenberg.qsl`:
 ```
 lattice 1d sites=10 pbc=true
 
-sum i=0..10:
+sum i=0..9:
   J * Sp(i) * Sm(i+1)
   J * Sm(i) * Sp(i+1)
   J * Sz(i) * Sz(i+1)
@@ -78,7 +85,53 @@ quantum-simpl heisenberg.qsl -o output/
 
 ### Note on Open Boundary Conditions
 
-When using `pbc=false`, terms that reference sites outside the lattice range are silently dropped. Make sure your sum ranges are compatible with the lattice size. For example, with `sites=10 pbc=false`, use `sum i=0..9` for nearest-neighbor hopping to avoid referencing site 10.
+When using `pbc=false`, terms that reference sites outside the lattice range are dropped with a warning. Make sure your sum ranges are compatible with the lattice size. For example, with `sites=10 pbc=false`, use `sum i=0..8` for nearest-neighbor hopping to avoid referencing site 10 (since the range is inclusive, `i=9` would generate `c†(9,s) c(10,s)` which is out of range).
+
+### Yokoyama–Shiba transformation
+
+The **Yokoyama–Shiba (YS) transformation** is a particle–hole transformation applied to **down-spin only**: creation and annihilation for ↓ are swapped (\(c^\dagger_{i\downarrow} \leftrightarrow c_{i\downarrow}\)), while up-spin operators are unchanged. It is often used with Hubbard-type models in mVMC to change the sign structure of the Hamiltonian or to match a particular formulation.
+
+**Rule (down-spin):**
+
+- \(c^\dagger(i,\downarrow) \to c(i,\downarrow)\)
+- \(c(i,\downarrow) \to c^\dagger(i,\downarrow)\)
+
+**Usage:**
+
+```bash
+quantum-simpl hubbard.def -o output/ --ys-transform
+```
+
+With `--ys-transform`, the pipeline also classifies terms into one-body, two-body, and on-site Coulomb (coulomb-intra). When on-site Coulomb terms exist, `coulombintra.def` is written and referenced from `namelist.def`. Any constant (offset) terms are reported on stderr.
+
+### Correlation Function Pipeline
+
+To compute correlation functions (e.g. spin–spin ⟨S·S⟩ or density–density ⟨n n⟩) for mVMC, use a **correlation definition file** with the same DSL. The tool converts spin/density operators to fermion form and writes mVMC measurement inputs.
+
+**Example** — nearest-neighbor spin correlation `S(i)·S(i+1)` on a 4-site chain (`examples/correlation_ss.qsl`):
+
+```
+lattice 1d sites=4 pbc=true
+
+sum i=0..3:
+  S(i) . S(i+1)
+```
+
+Run the correlation pipeline:
+
+```bash
+quantum-simpl --correlation examples/correlation_ss.qsl -o output_corr/
+```
+
+**Correlation output files** (in the output directory):
+
+| File | Description |
+|------|-------------|
+| `cisajs.def` | One-body Green’s function form (c†c terms) for mVMC |
+| `cisajscktaltdc.def` | Two-body Green’s function form (c†cc†c terms) for mVMC |
+| `correlation_summary.txt` | Human-readable list of transformed terms with coefficients |
+
+You can use the same operators as in the Hamiltonian (`S(i).S(j)`, `n(i,s) n(j,s)`, `Sp`, `Sm`, `Sz`, etc.). Coefficients in the correlation file are supported (e.g. `0.5 * S(i) . S(j)`).
 
 ## Supported Operators
 
@@ -91,9 +144,11 @@ When using `pbc=false`, terms that reference sites outside the lattice range are
 | Spin- | `Sm(i)` | Spin lowering operator |
 | Spin-z | `Sz(i)` | Spin z-component operator |
 
-Spin values: `up`, `down`. Index expressions: `i`, `i+1`, `i-1`, or literal integers.
+Spin values: `up`, `down`. Index expressions: `i`, `i+1`, `i-1`, or literal integers. The range `start..end` is **inclusive on both ends** — for N sites with PBC, use `sum i=0..N-1`.
 
 ## Output Files
+
+*(Standard pipeline; see "Correlation function pipeline" for `--correlation` outputs.)*
 
 | File | Description |
 |------|-------------|
@@ -102,6 +157,7 @@ Spin values: `up`, `down`. Index expressions: `i`, `i+1`, `i-1`, or literal inte
 | `locspn.def` | Local spin configuration |
 | `trans.def` | One-body transfer integrals |
 | `interall.def` | Two-body interaction terms |
+| `coulombintra.def` | On-site Coulomb terms (written with `--ys-transform` when present) |
 | `gutzwilleridx.def` | Gutzwiller variational parameters |
 | `jastrowidx.def` | Jastrow variational parameters |
 | `orbitalidx.def` | Orbital variational parameters |

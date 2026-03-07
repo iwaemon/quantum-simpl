@@ -34,7 +34,7 @@ fn heisenberg_4site_pbc() {
     let input = r#"
 lattice 1d sites=4 pbc=true
 
-sum i=0..4:
+sum i=0..3:
   J * Sp(i) Sm(i+1)
   J * Sm(i) Sp(i+1)
   J * 2.0 * Sz(i) Sz(i+1)
@@ -78,7 +78,7 @@ fn sz_symmetry_preserves_heisenberg() {
     let input = r#"
 lattice 1d sites=4 pbc=true
 
-sum i=0..4:
+sum i=0..3:
   J * Sp(i) Sm(i+1)
   J * Sm(i) Sp(i+1)
   J * 2.0 * Sz(i) Sz(i+1)

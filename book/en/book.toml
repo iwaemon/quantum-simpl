@@ -1,0 +1,8 @@
+[book]
+title = "quantum-simpl Documentation"
+authors = ["quantum-simpl contributors"]
+language = "en"
+src = "src"
+
+[build]
+build-dir = "../../docs/en"

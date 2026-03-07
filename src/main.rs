@@ -7,6 +7,7 @@ use std::path::PathBuf;
 
 #[derive(Parser)]
 #[command(name = "quantum-simpl")]
+#[command(version)]
 #[command(about = "Hamiltonian symbolic preprocessor for mVMC")]
 struct Cli {
     /// Input DSL file

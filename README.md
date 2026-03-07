@@ -54,7 +54,44 @@ Run quantum-simpl:
 quantum-simpl hubbard.def -o output/
 ```
 
-mVMC input files are generated in the `output/` directory.
+mVMC input files are generated in the `output/` directory. Input files can use any extension (`.qsl`, `.def`, etc.).
+
+### Heisenberg Model Example
+
+quantum-simpl also supports spin operators. Create `heisenberg.qsl`:
+
+```
+lattice 1d sites=10 pbc=true
+
+sum i=0..10:
+  J * Sp(i) * Sm(i+1)
+  J * Sm(i) * Sp(i+1)
+  J * Sz(i) * Sz(i+1)
+
+params:
+  J = 1.0
+```
+
+```bash
+quantum-simpl heisenberg.qsl -o output/
+```
+
+### Note on Open Boundary Conditions
+
+When using `pbc=false`, terms that reference sites outside the lattice range are silently dropped. Make sure your sum ranges are compatible with the lattice size. For example, with `sites=10 pbc=false`, use `sum i=0..9` for nearest-neighbor hopping to avoid referencing site 10.
+
+## Supported Operators
+
+| Operator | Syntax | Description |
+|----------|--------|-------------|
+| Creation | `c†(i,spin)` | Fermion creation operator |
+| Annihilation | `c(i,spin)` | Fermion annihilation operator |
+| Number | `n(i,spin)` | Number operator (sugar for `c†(i,s) c(i,s)`) |
+| Spin+ | `Sp(i)` | Spin raising operator |
+| Spin- | `Sm(i)` | Spin lowering operator |
+| Spin-z | `Sz(i)` | Spin z-component operator |
+
+Spin values: `up`, `down`. Index expressions: `i`, `i+1`, `i-1`, or literal integers.
 
 ## Output Files
 

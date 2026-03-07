@@ -54,7 +54,44 @@ quantum-simpl を実行します：
 quantum-simpl hubbard.def -o output/
 ```
 
-`output/` ディレクトリに mVMC 入力ファイルが生成されます。
+`output/` ディレクトリに mVMC 入力ファイルが生成されます。入力ファイルの拡張子は任意です（`.qsl`、`.def` など）。
+
+### Heisenbergモデルの例
+
+quantum-simpl はスピン演算子にも対応しています。`heisenberg.qsl` を作成します：
+
+```
+lattice 1d sites=10 pbc=true
+
+sum i=0..10:
+  J * Sp(i) * Sm(i+1)
+  J * Sm(i) * Sp(i+1)
+  J * Sz(i) * Sz(i+1)
+
+params:
+  J = 1.0
+```
+
+```bash
+quantum-simpl heisenberg.qsl -o output/
+```
+
+### 開放境界条件に関する注意
+
+`pbc=false` を使用する場合、格子範囲外のサイトを参照する項は自動的に除去されます。sumの範囲が格子サイズと整合するよう注意してください。例えば `sites=10 pbc=false` の場合、最近接ホッピングには `sum i=0..9` を使用してください。
+
+## 対応する演算子
+
+| 演算子 | 構文 | 説明 |
+|--------|------|------|
+| 生成 | `c†(i,spin)` | フェルミオン生成演算子 |
+| 消滅 | `c(i,spin)` | フェルミオン消滅演算子 |
+| 数 | `n(i,spin)` | 数演算子（`c†(i,s) c(i,s)` の糖衣構文） |
+| スピン+ | `Sp(i)` | スピン上昇演算子 |
+| スピン- | `Sm(i)` | スピン下降演算子 |
+| スピンz | `Sz(i)` | スピンz成分演算子 |
+
+スピン値: `up`、`down`。インデックス式: `i`、`i+1`、`i-1`、またはリテラル整数。
 
 ## 出力ファイル
 

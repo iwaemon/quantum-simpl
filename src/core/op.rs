@@ -16,16 +16,6 @@ pub enum Op {
 }
 
 impl Op {
-    pub fn site(&self) -> usize {
-        match self {
-            Op::FermionCreate(s, _)
-            | Op::FermionAnnihilate(s, _)
-            | Op::SpinPlus(s)
-            | Op::SpinMinus(s)
-            | Op::SpinZ(s) => *s,
-        }
-    }
-
     pub fn delta_sz(&self) -> i32 {
         match self {
             Op::FermionCreate(_, Spin::Up) => 1,
@@ -73,9 +63,6 @@ impl Term {
         Self { coeff: self.coeff, ops: new_ops }
     }
 
-    pub fn num_ops(&self) -> usize {
-        self.ops.len()
-    }
 }
 
 #[derive(Debug, Clone)]

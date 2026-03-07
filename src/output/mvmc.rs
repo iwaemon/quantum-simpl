@@ -133,14 +133,14 @@ RndSeed  12345
 }
 
 pub fn generate_namelist() -> String {
-    "         ModPara  modpara.def\n\
-         LocSpin  locspn.def\n\
-           Trans  trans.def\n\
-        InterAll  interall.def\n\
-      Gutzwiller  gutzwilleridx.def\n\
-         Jastrow  jastrowidx.def\n\
-         Orbital  orbitalidx.def\n\
-        TransSym  qptransidx.def\n"
+    "ModPara  modpara.def\n\
+LocSpin  locspn.def\n\
+Trans  trans.def\n\
+InterAll  interall.def\n\
+Gutzwiller  gutzwilleridx.def\n\
+Jastrow  jastrowidx.def\n\
+Orbital  orbitalidx.def\n\
+TransSym  qptransidx.def\n"
         .to_string()
 }
 

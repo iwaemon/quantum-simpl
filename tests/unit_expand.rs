@@ -56,7 +56,7 @@ params:
     let ham = expand(&model);
     assert_eq!(ham.terms.len(), 1);
     assert_eq!(ham.terms[0].coeff, 4.0);
-    assert_eq!(ham.terms[0].num_ops(), 4);
+    assert_eq!(ham.terms[0].ops.len(), 4);
 }
 
 #[test]

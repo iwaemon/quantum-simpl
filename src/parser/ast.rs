@@ -7,6 +7,7 @@ pub struct ModelDef {
 
 #[derive(Debug, Clone)]
 pub struct LatticeDef {
+    #[allow(dead_code)]
     pub dimension: String,
     pub num_sites: usize,
     pub pbc: bool,

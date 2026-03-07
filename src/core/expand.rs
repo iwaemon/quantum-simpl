@@ -6,6 +6,7 @@ pub fn expand(model: &ModelDef) -> Hamiltonian {
     let num_sites = model.lattice.num_sites;
     let pbc = model.lattice.pbc;
     let mut ham = Hamiltonian::new(num_sites);
+    let mut dropped = 0usize;
 
     let params: std::collections::HashMap<&str, f64> = model.params.iter()
         .map(|(k, v)| (k.as_str(), *v))
@@ -27,9 +28,15 @@ pub fn expand(model: &ModelDef) -> Hamiltonian {
                     } else {
                         ham.add_term(term);
                     }
+                } else if !pbc {
+                    dropped += 1;
                 }
             }
         }
+    }
+
+    if dropped > 0 {
+        eprintln!("Warning: {} term(s) dropped due to out-of-range site indices (OBC mode)", dropped);
     }
 
     ham

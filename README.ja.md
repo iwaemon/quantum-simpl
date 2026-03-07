@@ -2,7 +2,7 @@
 
 [English](README.md)
 
-ハミルトニアン記号前処理ツール — モデル定義から [mVMC](https://github.com/issp-center-dev/mVMC) 入力ファイルを自動生成します。
+ハミルトニアンシンボリック前処理ツール — モデル定義から [mVMC](https://github.com/issp-center-dev/mVMC) 入力ファイルを自動生成します。
 
 ## これは何？
 
@@ -60,7 +60,7 @@ quantum-simpl hubbard.def -o output/
 
 | ファイル | 説明 |
 |----------|------|
-| `Trans.def` | 一体移行積分 |
+| `Trans.def` | 一体遷移積分 |
 | `InterAll.def` | 二体相互作用項 |
 | `modpara.def` | シミュレーションパラメータ |
 | `locspn.def` | 局所スピン設定 |

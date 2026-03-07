@@ -44,3 +44,24 @@ fn trans_def_empty_if_no_one_body() {
     let output = generate_trans_def(&ham);
     assert!(output.contains("NTransfer      0"));
 }
+
+#[test]
+fn coulombintra_def_output() {
+    use quantum_simpl::core::classify::ClassifiedTerms;
+    use quantum_simpl::core::op::Term;
+    use quantum_simpl::output::mvmc::generate_coulombintra_def;
+
+    let classified = ClassifiedTerms {
+        constants: vec![],
+        one_body: vec![],
+        coulomb_intra: vec![(0, 4.0), (1, 4.0)],
+        two_body: vec![],
+    };
+
+    let output = generate_coulombintra_def(&classified);
+    assert!(output.contains("N 2"));
+    // Check both sites appear
+    let lines: Vec<&str> = output.lines().collect();
+    let data_lines: Vec<&str> = lines.iter().filter(|l| l.starts_with("0 ") || l.starts_with("1 ")).copied().collect();
+    assert_eq!(data_lines.len(), 2);
+}

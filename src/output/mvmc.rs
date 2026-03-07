@@ -1,3 +1,4 @@
+use crate::core::classify::ClassifiedTerms;
 use crate::core::op::{Op, Spin, Hamiltonian, Term};
 use std::path::Path;
 use std::fs;
@@ -213,6 +214,21 @@ pub fn generate_qptransidx_def(ham: &Hamiltonian) -> String {
     for i in 0..n {
         out.push_str(&format!("    0      {}      {}\n", i, i));
     }
+    out
+}
+
+pub fn generate_coulombintra_def(classified: &ClassifiedTerms) -> String {
+    let mut out = String::new();
+    out.push_str("====== \n");
+    out.push_str(&format!("N {} \n", classified.coulomb_intra.len()));
+    out.push_str("====== \n");
+    out.push_str("====== \n");
+    out.push_str("====== \n");
+
+    for (site, coeff) in &classified.coulomb_intra {
+        out.push_str(&format!("{} {:.15} \n", site, coeff));
+    }
+
     out
 }
 

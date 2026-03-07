@@ -49,6 +49,25 @@ fn classify_coulomb_intra_detection() {
 }
 
 #[test]
+fn classify_coulomb_intra_normal_ordered() {
+    // Normal-ordered form: c†(0,Up) c†(0,Down) c(0,Up) c(0,Down) — same site, CoulombIntra
+    let terms = vec![
+        Term::new(4.0, smallvec![
+            Op::FermionCreate(0, Spin::Up),
+            Op::FermionCreate(0, Spin::Down),
+            Op::FermionAnnihilate(0, Spin::Up),
+            Op::FermionAnnihilate(0, Spin::Down),
+        ]),
+    ];
+
+    let classified = classify_terms(&terms);
+    assert_eq!(classified.coulomb_intra.len(), 1);
+    assert_eq!(classified.coulomb_intra[0].0, 0);
+    assert!((classified.coulomb_intra[0].1 - 4.0).abs() < 1e-12);
+    assert_eq!(classified.two_body.len(), 0);
+}
+
+#[test]
 fn classify_coulomb_inter_not_intra() {
     // c†(0,up) c(0,up) c†(1,up) c(1,up) — different sites, NOT CoulombIntra
     let terms = vec![

@@ -100,20 +100,13 @@ params:
 ";
     let classified = run_ys_pipeline(input);
 
-    // After YS + normal ordering, the interaction terms are in two_body
-    // with fully normal-ordered form: c†(i,Up) c†(i,Down) c(i,Up) c(i,Down)
-    // and coefficient +U = +4.0 (the sign flip from -U is absorbed by normal ordering)
-    let intra_terms: Vec<_> = classified.two_body.iter().filter(|t| {
-        match (t.ops[0], t.ops[1], t.ops[2], t.ops[3]) {
-            (Op::FermionCreate(s0, Spin::Up), Op::FermionCreate(s1, Spin::Down),
-             Op::FermionAnnihilate(s2, Spin::Up), Op::FermionAnnihilate(s3, Spin::Down))
-                if s0 == s1 && s1 == s2 && s2 == s3 => true,
-            _ => false,
-        }
-    }).collect();
-    assert_eq!(intra_terms.len(), 2, "Should have on-site interaction on 2 sites");
-    for t in &intra_terms {
-        assert!((t.coeff - 4.0).abs() < 1e-12,
-            "On-site interaction coeff should be +4.0 (from -U*(-normal_order_sign)), got {}", t.coeff);
+    // After fix: detect_coulomb_intra now recognizes the normal-ordered form
+    // c†↑ c†↓ c↑ c↓ as CoulombIntra (same site, both spins)
+    assert_eq!(classified.coulomb_intra.len(), 2, "Should have CoulombIntra on 2 sites");
+    for &(site, coeff) in &classified.coulomb_intra {
+        assert!(site <= 1, "Site should be 0 or 1, got {}", site);
+        assert!((coeff - 4.0).abs() < 1e-12,
+            "CoulombIntra coeff should be +4.0, got {}", coeff);
     }
+    assert_eq!(classified.two_body.len(), 0, "No terms should remain in two_body");
 }

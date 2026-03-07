@@ -43,12 +43,17 @@ pub fn classify_terms(terms: &[Term]) -> ClassifiedTerms {
 fn detect_coulomb_intra(term: &Term) -> Option<(usize, f64)> {
     if term.ops.len() != 4 { return None; }
     match (term.ops[0], term.ops[1], term.ops[2], term.ops[3]) {
+        // Non-normal-ordered: c†↑ c↑ c†↓ c↓
         (Op::FermionCreate(s0, Spin::Up), Op::FermionAnnihilate(s1, Spin::Up),
          Op::FermionCreate(s2, Spin::Down), Op::FermionAnnihilate(s3, Spin::Down))
             if s0 == s1 && s1 == s2 && s2 == s3 => Some((s0, term.coeff)),
         (Op::FermionCreate(s0, Spin::Down), Op::FermionAnnihilate(s1, Spin::Down),
          Op::FermionCreate(s2, Spin::Up), Op::FermionAnnihilate(s3, Spin::Up))
             if s0 == s1 && s1 == s2 && s2 == s3 => Some((s0, term.coeff)),
+        // Normal-ordered: c†↑ c†↓ c↑ c↓ (or c†↑ c†↓ c↓ c↑)
+        (Op::FermionCreate(s0, sp0), Op::FermionCreate(s1, sp1),
+         Op::FermionAnnihilate(s2, _), Op::FermionAnnihilate(s3, _))
+            if s0 == s1 && s1 == s2 && s2 == s3 && sp0 != sp1 => Some((s0, term.coeff)),
         _ => None,
     }
 }

@@ -48,7 +48,6 @@ fn trans_def_empty_if_no_one_body() {
 #[test]
 fn coulombintra_def_output() {
     use quantum_simpl::core::classify::ClassifiedTerms;
-    use quantum_simpl::core::op::Term;
     use quantum_simpl::output::mvmc::generate_coulombintra_def;
 
     let classified = ClassifiedTerms {

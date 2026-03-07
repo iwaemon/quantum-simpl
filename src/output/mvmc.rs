@@ -60,7 +60,7 @@ pub fn generate_interall_def(ham: &Hamiltonian) -> String {
             // Pattern: c†_i c_j c†_k c_l (mVMC native format)
             (Op::FermionCreate(i, si), Op::FermionAnnihilate(j, sj),
              Op::FermionCreate(k, sk), Op::FermionAnnihilate(l, sl)) => {
-                out.push_str(&format!("{} {} {} {} {} {} {} {} {:.1} {:.1} \n",
+                out.push_str(&format!("{} {} {} {} {} {} {} {} {:.15} {:.15}\n",
                     i, spin_to_idx(si), j, spin_to_idx(sj),
                     k, spin_to_idx(sk), l, spin_to_idx(sl),
                     term.coeff, 0.0));
@@ -69,7 +69,7 @@ pub fn generate_interall_def(ham: &Hamiltonian) -> String {
             // Convert: c†_a c†_b c_c c_d = -c†_a c_c c†_b c_d
             (Op::FermionCreate(a, sa), Op::FermionCreate(b, sb),
              Op::FermionAnnihilate(c, sc), Op::FermionAnnihilate(d, sd)) => {
-                out.push_str(&format!("{} {} {} {} {} {} {} {} {:.1} {:.1} \n",
+                out.push_str(&format!("{} {} {} {} {} {} {} {} {:.15} {:.15}\n",
                     a, spin_to_idx(sa), c, spin_to_idx(sc),
                     b, spin_to_idx(sb), d, spin_to_idx(sd),
                     -term.coeff, 0.0));

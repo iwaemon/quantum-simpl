@@ -71,9 +71,7 @@ quantum-simpl also supports spin operators. Create `heisenberg.qsl`:
 lattice 1d sites=10 pbc=true
 
 sum i=0..9:
-  J * Sp(i) * Sm(i+1)
-  J * Sm(i) * Sp(i+1)
-  J * Sz(i) * Sz(i+1)
+  J * S(i) . S(i+1)
 
 params:
   J = 1.0

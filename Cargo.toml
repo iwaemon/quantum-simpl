@@ -31,3 +31,7 @@ path = "tests/integration/test_heisenberg.rs"
 [[test]]
 name = "test_mvmc_output"
 path = "tests/integration/test_mvmc_output.rs"
+
+[[test]]
+name = "test_ys_transform"
+path = "tests/integration/test_ys_transform.rs"

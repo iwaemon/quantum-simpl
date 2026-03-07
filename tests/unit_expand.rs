@@ -19,8 +19,10 @@ params:
     let model = parse(input).unwrap();
     let ham = expand(&model);
     assert_eq!(ham.num_sites, 2);
-    // i=0 only: 1 hop up + 1 hc up + 1 hop down + 1 hc down + 1 interaction = 5
-    assert_eq!(ham.terms.len(), 5);
+    // i=0: 1 hop up + 1 hc up + 1 hop down + 1 hc down + 1 interaction = 5
+    // i=1: hops dropped (OBC, site 2 out of range) + 1 interaction = 1
+    // Total = 6
+    assert_eq!(ham.terms.len(), 6);
 }
 
 #[test]
@@ -54,9 +56,12 @@ params:
 "#;
     let model = parse(input).unwrap();
     let ham = expand(&model);
-    assert_eq!(ham.terms.len(), 1);
+    // i=0 and i=1: both n(i,up) n(i,down) terms are valid (sites 0,1 < num_sites=2)
+    assert_eq!(ham.terms.len(), 2);
     assert_eq!(ham.terms[0].coeff, 4.0);
     assert_eq!(ham.terms[0].ops.len(), 4);
+    assert_eq!(ham.terms[1].coeff, 4.0);
+    assert_eq!(ham.terms[1].ops.len(), 4);
 }
 
 #[test]
@@ -64,7 +69,7 @@ fn expand_pbc_wraps_around() {
     let input = r#"
 lattice 1d sites=4 pbc=true
 
-sum i=0..4:
+sum i=0..3:
   -t * c†(i,up) c(i+1,up) + h.c.
 
 params:
@@ -86,7 +91,7 @@ fn expand_obc_no_wrap() {
     let input = r#"
 lattice 1d sites=4 pbc=false
 
-sum i=0..3:
+sum i=0..2:
   -t * c†(i,up) c(i+1,up) + h.c.
 
 params:
